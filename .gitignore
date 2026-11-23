@@ -1,0 +1,8 @@
+*.zip
+app/build/
+build/
+.gradle/
+local.properties
+*.iml
+.idea/
+module/apk/.keep
