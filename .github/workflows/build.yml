@@ -1,4 +1,4 @@
-name: Build Comatoze v2.97.2
+name: Build Comatoze v2.97.8
 on:
   workflow_dispatch:
   push:
@@ -41,12 +41,12 @@ jobs:
       - name: Zip modul siap flash
         run: |
           cd module
-          zip -r9 ../Comatoze-v2.97.2.zip . -x '*.git*'
+          zip -r9 ../Comatoze-v2.97.8.zip . -x '*.git*'
           cd ..
-          unzip -l Comatoze-v2.97.2.zip | tail -n 3
+          unzip -l Comatoze-v2.97.8.zip | tail -n 3
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Comatoze-v2.97.2
-          path: Comatoze-v2.97.2.zip
+          name: Comatoze-v2.97.8
+          path: Comatoze-v2.97.8.zip
           if-no-files-found: error
