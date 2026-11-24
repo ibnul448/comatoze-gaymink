@@ -55,7 +55,7 @@ cpu_mode(){
     imax=$(cpu_top $p); imin=$(rd $p/cpuinfo_min_freq); ist=$(rd $p/cpuinfo_max_freq)
     [ -z "$fr" ] && fr="$imin $imax"
     case $1 in
-      perf) g=$(pick "$av" turbo performance schedutil walt); mx=$imax; mn=$imax;;
+      perf) g=$(pick "$av" scarlet performance turbo schedutil walt); mx=$imax; mn=$imax;;
       eco)  g=$(pick "$av" schedutil walt interactive powersave); mx=$(cap $((ist*60/100)) $fr); mn=$imin;;   # Eco tetap dihitung dari batas stok
       plite) g=$(pick "$av" schedutil walt interactive ondemand); mx=$(cap $((imax*82/100)) $fr); mn=$(cap $((imax*30/100)) $fr);;   # Performa Lite: lantai clock naik (responsif), atap 82% (tidak brutal, lebih hemat)
       *)    g=$(pick "$av" schedutil walt interactive ondemand); mx=$imax; mn=$imin;;
@@ -97,7 +97,7 @@ gpu_mode(){
   [ -z "$fr" ] && return
   top=$(maxof $fr); low=$(minof $fr)
   case $1 in
-    perf) g=$(pick "$av" hino_turbo turbo performance msm-adreno-tz); mn=$top; mx=$top;;
+    perf) g=$(pick "$av" scarlet performance hino_turbo turbo msm-adreno-tz); mn=$top; mx=$top;;
     eco)  g=$(pick "$av" msm-adreno-tz simple_ondemand mali_ondemand); mn=$low; mx=$(cap $((top*60/100)) $fr);;
     plite) g=$(pick "$av" msm-adreno-tz simple_ondemand mali_ondemand); mn=$(cap $((top*30/100)) $fr); mx=$(cap $((top*80/100)) $fr);;
     *)    g=$(pick "$av" msm-adreno-tz simple_ondemand mali_ondemand); mn=$low; mx=$top;;
@@ -200,6 +200,9 @@ perf_extra(){
   pxw /proc/sys/kernel/sched_autogroup_enabled 0
   pxw /proc/sys/kernel/sched_child_runs_first 0
   pxw /proc/sys/kernel/sched_migration_cost_ns 5000000
+  # semua task dianggap butuh util tinggi — scheduler langsung ambil clock besar
+  pxw /proc/sys/kernel/sched_util_clamp_min 60
+  pxw /proc/sys/kernel/sched_util_clamp_min_rt_default 40
   pxw /sys/module/workqueue/parameters/power_efficient N
   [ -n "$GPU" ] && [ -f $GPU/polling_interval ] && pxw $GPU/polling_interval 5
   for c in /sys/devices/system/cpu/cpu[1-9]*/online; do
@@ -341,6 +344,13 @@ perf_x(){
   #  - kgsl (Adreno): clock, bus & GPU tidak pernah "tidur" (force_clk_on/bus_on/no_nap), bus_split 0 = bandwidth penuh. Matikan dengan PERF_GPUFORCE=off di config
   px3 /proc/sys/kernel/sched_boost 1
   px3 /proc/sys/kernel/sched_autogroup_enabled 0
+  # sched realtime & fairness — semua ada di /proc/sys/kernel (HP ini), ditulis bila bisa
+  px4 /proc/sys/kernel/sched_rr_timeslice_ms 1
+  px4 /proc/sys/kernel/sched_latency_ns 1000000
+  px4 /proc/sys/kernel/sched_min_granularity_ns 50000
+  px4 /proc/sys/kernel/sched_wakeup_granularity_ns 500000
+  px4 /proc/sys/kernel/sched_nr_migrate 64
+  px4 /proc/sys/kernel/sched_tunable_scaling 0
   # --- schedtune (WALT/schedtune): top-app dipaksa boost maksimal & prefer idle, foreground ikut naik ---
   px3 /dev/stune/top-app/schedtune.boost 100
   px3 /dev/stune/top-app/schedtune.prefer_idle 1
@@ -502,7 +512,8 @@ eco_x(){
     ec=$(cap $((imax*60/100)) $fr); [ "$best" -gt "$ec" ] && best=$ec
     range $p/scaling_min_freq $p/scaling_max_freq $imin $best
   done
-  for g in background system-background; do ex1 /dev/cpuctl/$g/cpu.uclamp.max 25.00; done
+  for g in background system-background; do ex1 /dev/cpuctl/$g/cpu.uclamp.max 20.00; done
+  ex1 /dev/cpuctl/foreground/cpu.uclamp.max 40.00
   for u in $CPU/policy*/schedutil; do ex1 $u/up_rate_limit_us 2000; ex1 $u/down_rate_limit_us 4000; done
   exs global wifi_scan_always_enabled 0
   exs global ble_scan_always_enabled 0
@@ -2080,7 +2091,7 @@ game_fgp(){ # game dari daftar yang sedang di layar -> "paket pid" (deteksi lang
 game_fg(){ set -- $(game_fgp); echo $1; }
 glog(){ echo "$(date +%H:%M:%S) $*" >> $DIR/game.log; [ "$(stat -c %s $DIR/game.log 2>/dev/null || echo 0)" -gt 4096 ] && { tail -n 20 $DIR/game.log > $DIR/game.log.t; mv -f $DIR/game.log.t $DIR/game.log; }; }
 # ---------- CEK VERSI: bukti versi mana yang SEBENARNYA terpasang & jalan (modul, WebUI, aplikasi) ----------
-SCRIPT_VER=2.97.2
+SCRIPT_VER=2.97.8
 ver_check(){
   echo "skrip_berjalan=$SCRIPT_VER ($SELF)"
   for d in /data/adb/modules /data/adb/modules_update; do
@@ -2206,6 +2217,7 @@ fpp(){ # prop nilai: simpan nilai asli sekali ($FPP), lalu set
   grep -q "^$1|" $FPP 2>/dev/null || echo "$1|$(getprop $1)" >> $FPP
   setprop "$1" "$2" 2>/dev/null; }
 fp_alt(){ # knob pengganti FPSGO + penstabil tambahan (node tidak ada = dilewati)
+  # jalur tetap (kernel MTK biasa)
   for _n in /sys/module/ged/parameters/ged_boost_enable /sys/module/ged/parameters/gx_game_mode /sys/module/ged/parameters/gx_boost_on /sys/module/ged/parameters/enable_game_self_frc_detect /sys/module/ged/parameters/boost_gpu_enable /sys/module/ged/parameters/enable_gpu_boost; do fpw $_n 1; done
   fpw /proc/perfmgr/syslimiter/syslimiter_force_disable 1
   fpw /proc/perfmgr/boost_ctrl/eas_ctrl/perfserv_fg_boost 60
@@ -2216,7 +2228,20 @@ fp_alt(){ # knob pengganti FPSGO + penstabil tambahan (node tidak ada = dilewati
   fpw /sys/module/mtk_fpsgo/parameters/gcc_enable 0
   fpw /sys/kernel/ged/hal/dcs_mode 0
   for _p in /sys/module/*fpsgo*/parameters; do [ -d $_p ] && { fpw $_p/fbt_enable 1; fpw $_p/boost_ta 1; fpw $_p/cfp_onoff 0; fpw $_p/gcc_enable 0; }; done
-  for _p in /proc/ppm/policy/*; do case "$_p" in *LIMIT*|*THRO*|*THERM*) [ -e "$_p" ] && fpw "$_p" 0;; esac; done; }
+  for _p in /proc/ppm/policy/*; do case "$_p" in *LIMIT*|*THRO*|*THERM*) [ -e "$_p" ] && fpw "$_p" 0;; esac; done
+  # kernel custom (fpsgo/perfmgr/ppm tidak ada): scan /sys/module/*/parameters untuk knob boost/game/perf yang ada,
+  # lalu tulis nilai "aktif" (1) ke semuanya; node yang tidak ada / tidak bisa ditulis otomatis dilewati fpw.
+  for _m in /sys/module/*/parameters; do
+    [ -d "$_m" ] || continue
+    case "$_m" in *fpsgo*|*ged*|*perfmgr*|*boost*|*perf*|*game*|*sched*) :;; *) continue;; esac
+    for _n in "$_m"/*; do
+      [ -f "$_n" ] || continue
+      case "${_n##*/}" in
+        *enable*|*boost*|*game*|*perf*|*turbo*|*priority*|*affinit*|*limit*) fpw "$_n" 1;;
+        *disable*|*throttle*|*limit*|*save*|*powersave*) fpw "$_n" 0;;
+      esac
+    done
+  done; }
 fp_on(){
   FPN=0; mkdir -p $DIR
   for _p in $CPU/policy*; do

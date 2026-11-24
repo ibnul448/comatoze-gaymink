@@ -794,7 +794,7 @@ const FEATURES=[
  {id:'bypass',group:'chg',ic:'plug',tn:'purple',name:'Bypass Charging',short:'Daya langsung ke sistem',desc:'Hentikan pengisian baterai, daya langsung ke sistem. Nilai asli dipulihkan saat dimatikan.'},
  {id:'gameprofile',group:'game',ic:'rocket',tn:'purple',name:'Profil Otomatis Game',short:'Mode dan Hz khusus saat game',desc:'Masuk game: mode & Hz dari Profil Game. Keluar: kembali seperti semula.'},
  {id:'fpsrec',group:'game',ic:'activity',tn:'blue',name:'Rekam FPS',short:'Rekam FPS & suhu selama game',desc:'Merekam FPS (dari SurfaceFlinger) dan suhu baterai tiap 1 detik selama game di Daftar Game berjalan; hasilnya per game ada di Profil Game > Rekaman FPS. Bisa juga dimatikan dari tombol notifikasi.'},
- {id:'fpsov',group:'game',ic:'activity',tn:'blue',name:'Overlay FPS',short:'Chip FPS kecil di layar saat game',desc:'Lingkaran hitam kecil menampilkan FPS real-time + baterai. Tap chip membuka menu: slider kecerahan, Rekam FPS/Layar, pilih Mode/Hz, Thermal Off, DND, Screenshot. Ukuran & transparansi diatur di Pengaturan.'},
+ {id:'fpsov',group:'game',ic:'activity',tn:'blue',name:'Overlay FPS',short:'Chip FPS kecil di layar saat game',desc:'Lingkaran hitam kecil menampilkan FPS real-time + baterai di pojok kiri atas. Drag untuk pindahkan; tap chip = mulai/hentikan rekam layar (video tersimpan di Movies/comatoze_rec.mp4). Ukuran & transparansi diatur di Pengaturan.'},
  {id:'threadpin',group:'game',ic:'rocket',tn:'rose',name:'Prioritas Thread Game',short:'Thread tersibuk ke inti CPU tercepat',desc:'Tiap ~30 detik memindahkan 3 thread game paling sibuk (game/render thread) ke inti tercepat dan menaikkan prioritasnya, supaya perang ramai dan skill tidak drop.'},
  {id:'gamecam',group:'game',ic:'camera',tn:'rose',name:'Blokir Kamera saat Game',short:'Kamera dinonaktifkan sementara saat game',desc:'Saat game dibuka, semua aplikasi yang memakai kamera diblokir (appops CAMERA=ignore) sehingga tidak ada yang bisa mengakses kamera. Otomatis dipulihkan saat keluar game.'},
  {id:'gamecall',group:'game',ic:'phone',tn:'amber',name:'Blokir Teleponi saat Game',short:'Panggilan & SMS diblokir sementara saat game',desc:'Saat game dibuka, panggilan masuk & SMS diblokir (appops DIAL_CALL/ANSWER_PHONE_CALLS/RECEIVE_SMS=ignore) supaya tidak mengganggu permainan. Otomatis dipulihkan saat keluar game.'},
@@ -1629,7 +1629,7 @@ function render(){
   coolWatch();memWatch();setBar();
 }
 /* ---------- UI v2.36: nav 4 tab, menu Tweaks dengan sub-halaman, daftar Aplikasi, dialog radio ---------- */
-const VER='2.97.2';
+const VER='2.97.8';
 IC.home=sv('<path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/>');
 IC.grid=sv('<rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/><rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="16" y="10" width="4" height="4" rx="1"/><rect x="4" y="16" width="4" height="4" rx="1"/><rect x="10" y="16" width="4" height="4" rx="1"/><rect x="16" y="16" width="4" height="4" rx="1"/>');
 IC.sliders=sv('<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>');
